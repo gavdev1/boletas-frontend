@@ -1,26 +1,24 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import {
-  api,
-  authApi,
-  alumnoApi,
-  materiaApi,
-  boletaApi,
-  calificacionApi,
+import { 
+  api, 
+  authApi, 
+  alumnoApi, 
+  materiaApi, 
+  boletaApi, 
+  calificacionApi, 
   dashboardApi,
-  configuracionApi,
-} from '../services/api';
-import type {
-  LoginRequest,
-  RegisterRequest,
-  ForgotPasswordRequest,
-  ResetPasswordRequest,
-  AlumnoCreate,
-  AlumnoUpdate,
-  MateriaCreate,
-  MateriaUpdate,
-  BoletaCreate,
-  CalificacionCreate,
-  ConfiguracionUpdate,
+  configuracionApi, 
+  type LoginRequest, 
+  type RegisterRequest, 
+  type ForgotPasswordRequest, 
+  type ResetPasswordRequest, 
+  type AlumnoCreate, 
+  type AlumnoUpdate, 
+  type MateriaCreate, 
+  type MateriaUpdate, 
+  type BoletaCreate, 
+  type ConfiguracionUpdate, 
+  type LapsoNotaInput 
 } from '../services/api';
 
 // Mock axios
@@ -429,11 +427,12 @@ describe('calificacionApi', () => {
   });
 
   it('should registrar nota', async () => {
-    const mockData: CalificacionCreate = {
+    const mockData: LapsoNotaInput = {
       alumno_id: 1,
       materia_id: 1,
+      lapso: 1,
+      nota: 18,
       anio_escolar: '2024-2025',
-      lapso_1_def: 18,
     };
 
     const mockResponse = {

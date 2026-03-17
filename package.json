@@ -2,15 +2,14 @@
   "name": "frontend",
   "private": true,
   "version": "0.0.0",
-  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:standalone": "cd standalone && python build.py",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest",
-    "test:coverage": "vitest --coverage",
-    "test:ui": "vitest --ui"
+    "test:coverage": "vitest --coverage"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.9",

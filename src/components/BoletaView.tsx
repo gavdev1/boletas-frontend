@@ -46,7 +46,7 @@ const BoletaView: React.FC<BoletaViewProps> = ({ boleta, onBack }) => {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `boleta_${alumno?.cedula || 'desconocido'}_${boleta.tipo_evaluacion.replace(' ', '_')}.pdf`;
+      a.download = `boleta_${alumno?.cedula || 'desconocido'}_${(boleta.tipo_evaluacion || 'evaluacion').replace(' ', '_')}.pdf`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);

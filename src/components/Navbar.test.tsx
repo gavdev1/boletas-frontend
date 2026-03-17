@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import Navbar from './Navbar';
-import { AuthProvider } from '../contexts/AuthContext';
 import React from 'react';
 
 // Mock the AuthContext

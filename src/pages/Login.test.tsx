@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import Login from './Login';
-import { AuthProvider } from '../contexts/AuthContext';
 import React from 'react';
 
 // Mock the AuthContext

@@ -143,6 +143,7 @@ describe('AuthContext', () => {
       username: 'newuser',
       email: 'new@test.com',
       is_active: true,
+      created_at: '2024-01-01T00:00:00Z',
     };
     
     vi.mocked(authApi.register).mockResolvedValueOnce(mockUser);

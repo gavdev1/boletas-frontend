@@ -1,73 +1,143 @@
-# React + TypeScript + Vite
+# Sistema de Boletas Escolares - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Frontend del Sistema de Boletas Escolares construido con React + TypeScript + Vite y Tailwind CSS.
 
-Currently, two official plugins are available:
+## 🚀 Scripts Disponibles
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+```bash
+# Instalar dependencias
+npm install
 
-## React Compiler
+# Servidor de desarrollo
+npm run dev
 
-The React Compiler is currently not compatible with SWC. See [this issue](https://github.com/vitejs/vite-plugin-react/issues/428) for tracking the progress.
+# Build para producción
+npm run build
 
-## Expanding the ESLint configuration
+# Build + Ejecutable standalone (sin necesidad de Node.js/Python)
+npm run build:standalone
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+# Preview del build
+npm run preview
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+# Tests
+npm run test
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+# Tests con coverage
+npm run test:coverage
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# Linting
+npm run lint
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 📦 Ejecutable Standalone
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+El proyecto genera un ejecutable multiplataforma que no requiere tener Node.js ni Python instalado.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### ¿Cómo funciona?
+1. Compila React a archivos estáticos (`dist/`)
+2. Empaqueta con PyInstaller para crear un ejecutable nativo
+3. Incluye un servidor HTTP embebido que sirve los archivos estáticos
+
+### Generar el ejecutable
+```bash
+npm run build:standalone
 ```
+
+El ejecutable final quedará en `standalone/release/`:
+- **Windows**: `boletas-frontend.exe`
+- **Linux**: `boletas-frontend`
+- **macOS**: `boletas-frontend`
+
+### Uso del ejecutable
+Simplemente haz doble clic o ejecuta desde terminal:
+```bash
+# Windows
+boletas-frontend.exe
+
+# Linux/macOS
+./boletas-frontend
+```
+
+- Se abre automáticamente en el navegador
+- Usa puerto dinámico (3000-3100)
+- Presiona `Ctrl+C` para detener
+
+## 🛠️ Stack Tecnológico
+
+- **Frontend**: React 19 + TypeScript
+- **Styling**: Tailwind CSS 4
+- **Build Tool**: Vite
+- **Testing**: Vitest + Testing Library
+- **Linter**: ESLint
+- **Standalone**: Python + PyInstaller
+
+## 📁 Estructura del Proyecto
+
+```
+frontend/
+├── src/                    # Código fuente React
+│   ├── components/         # Componentes
+│   ├── pages/             # Páginas
+│   ├── services/          # API services
+│   └── ...
+├── public/                # Archivos estáticos
+├── dist/                  # Build de producción (auto-generado)
+├── standalone/            # Sistema de ejecutable
+│   ├── server.py          # Servidor HTTP embebido
+│   ├── server.spec        # Config PyInstaller
+│   ├── build.py           # Script de build
+│   └── release/           # Ejecutable final
+├── package.json           # Dependencias y scripts
+└── README.md              # Este archivo
+```
+
+## 🌐 Compatibilidad
+
+### Ejecutable Standalone
+- **Windows**: Windows 10/11 (x64)
+- **Linux**: Distribuciones modernas (x64)
+- **macOS**: macOS 10.15+ (Intel y Apple Silicon)
+
+**Nota**: Windows 7 no es compatible debido a requerimientos de Python 3.9+
+
+### Desarrollo
+- **Node.js**: 18+
+- **npm**: 9+
+
+## 🔧 Desarrollo
+
+Para iniciar el servidor de desarrollo:
+```bash
+npm run dev
+```
+
+El servidor se iniciará en `http://localhost:5173` con hot reload.
+
+## 📝 Tests
+
+```bash
+# Ejecutar tests
+npm run test
+
+# Ver coverage
+npm run test:coverage
+```
+
+## 🚀 Despliegue
+
+### Opción 1: Ejecutable Standalone (Recomendado)
+```bash
+npm run build:standalone
+# Distribuye el ejecutable en standalone/release/
+```
+
+### Opción 2: Archivos estáticos
+```bash
+npm run build
+# Sirve la carpeta dist/ con cualquier servidor web
+```
+
+## 📄 Licencia
+
+Proyecto desarrollado para el Sistema de Boletas Escolares.
