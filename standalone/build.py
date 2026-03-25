@@ -61,7 +61,8 @@ def main():
     # 3. PyInstaller
     print("\n📦 Paso 2: Creando ejecutable con PyInstaller...")
     spec_file = standalone_dir / "server.spec"
-    if not run_command(f"pyinstaller \"{spec_file}\" --clean --noconfirm", 
+    # Usar uv run para asegurar que pyinstaller esté disponible
+    if not run_command(f"uv run --with pyinstaller pyinstaller \"{spec_file}\" --clean --noconfirm", 
                        cwd=standalone_dir,
                        description="Empaquetando con PyInstaller"):
         print("❌ Falló PyInstaller")
