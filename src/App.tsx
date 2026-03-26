@@ -9,6 +9,7 @@ import AlumnosManagement from './pages/AlumnosManagement';
 import MateriasManagement from './pages/MateriasManagement';
 import BoletaManagement from './pages/BoletaManagement';
 import ConfiguracionManagement from './pages/ConfiguracionManagement';
+import SeccionesManagement from './pages/SeccionesManagement';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -44,6 +45,11 @@ function App() {
             <Route path="/configuracion" element={
               <ProtectedRoute>
                 <ConfiguracionManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="/secciones" element={
+              <ProtectedRoute>
+                <SeccionesManagement />
               </ProtectedRoute>
             } />
             <Route path="/" element={<Navigate to="/login" replace />} />

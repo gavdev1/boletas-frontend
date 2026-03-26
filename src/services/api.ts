@@ -52,7 +52,14 @@ export interface Alumno {
   lugar_nacimiento?: string;
   estado_nacimiento?: string;
   nombre_representante?: string;
+  telefono_representante?: string;
+  correo_representante?: string;
   direccion_representante?: string;
+  correo_estudiante?: string;
+  grado?: number;
+  seccion?: string;
+  numero_lista?: number;
+  modalidad?: string;
 }
 
 export interface AlumnoCreate {
@@ -64,7 +71,14 @@ export interface AlumnoCreate {
   lugar_nacimiento?: string;
   estado_nacimiento?: string;
   nombre_representante?: string;
+  telefono_representante?: string;
+  correo_representante?: string;
   direccion_representante?: string;
+  correo_estudiante?: string;
+  grado?: number;
+  seccion?: string;
+  numero_lista?: number;
+  modalidad?: string;
 }
 
 export interface AlumnoUpdate {
@@ -76,7 +90,36 @@ export interface AlumnoUpdate {
   lugar_nacimiento?: string;
   estado_nacimiento?: string;
   nombre_representante?: string;
+  telefono_representante?: string;
+  correo_representante?: string;
   direccion_representante?: string;
+  correo_estudiante?: string;
+  grado?: number;
+  seccion?: string;
+  numero_lista?: number;
+  modalidad?: string;
+}
+
+export interface Seccion {
+  id: number;
+  grado: number;
+  letra: string;
+  modalidad?: string;
+  anio_escolar?: string;
+}
+
+export interface SeccionCreate {
+  grado: number;
+  letra: string;
+  modalidad?: string;
+  anio_escolar?: string;
+}
+
+export interface SeccionUpdate {
+  grado?: number;
+  letra?: string;
+  modalidad?: string;
+  anio_escolar?: string;
 }
 
 export interface Materia {
@@ -84,18 +127,21 @@ export interface Materia {
   nombre: string;
   grado: number;
   es_numerica: boolean;
+  modalidad?: string;
 }
 
 export interface MateriaCreate {
   nombre: string;
   grado: number;
   es_numerica: boolean;
+  modalidad?: string;
 }
 
 export interface MateriaUpdate {
   nombre?: string;
   grado?: number;
   es_numerica?: boolean;
+  modalidad?: string;
 }
 
 export interface Calificacion {
@@ -165,7 +211,11 @@ export interface BoletaCreate {
   anio_escolar?: string;
   grado?: number;
   seccion?: string;
+  modalidad?: string;
   numero_lista?: number;
+  inasistencias_lapso_1?: number;
+  inasistencias_lapso_2?: number;
+  inasistencias_lapso_3?: number;
   tipo_evaluacion?: string;
   observaciones?: string;
   hasta_lapso?: number;
@@ -179,6 +229,7 @@ export interface BoletaUpdate {
   grado?: number;
   seccion?: string;
   numero_lista?: number;
+  inasistencias?: number;
   tipo_evaluacion?: string;
   observaciones?: string;
   profesor?: string;
@@ -266,10 +317,13 @@ export const alumnoApi = {
 };
 
 export const materiaApi = {
-  getAll: async (skip: number = 0, limit: number = 100, grado?: number): Promise<Materia[]> => {
+  getAll: async (skip: number = 0, limit: number = 100, grado?: number, modalidad?: string): Promise<Materia[]> => {
     const params = new URLSearchParams({ skip: skip.toString(), limit: limit.toString() });
     if (grado !== undefined) {
       params.append('grado', grado.toString());
+    }
+    if (modalidad) {
+      params.append('modalidad', modalidad);
     }
     const response = await api.get(`/materias?${params}`);
     return response.data;
@@ -398,6 +452,32 @@ export const configuracionApi = {
   update: async (data: ConfiguracionUpdate): Promise<Configuracion> => {
     const response = await api.put('/configuracion', data);
     return response.data;
+  },
+};
+
+export const seccionApi = {
+  getAll: async (skip: number = 0, limit: number = 100): Promise<Seccion[]> => {
+    const response = await api.get(`/secciones?skip=${skip}&limit=${limit}`);
+    return response.data;
+  },
+
+  getById: async (id: number): Promise<Seccion> => {
+    const response = await api.get(`/secciones/${id}`);
+    return response.data;
+  },
+
+  create: async (data: SeccionCreate): Promise<Seccion> => {
+    const response = await api.post('/secciones', data);
+    return response.data;
+  },
+
+  update: async (id: number, data: SeccionUpdate): Promise<Seccion> => {
+    const response = await api.put(`/secciones/${id}`, data);
+    return response.data;
+  },
+
+  delete: async (id: number): Promise<void> => {
+    await api.delete(`/secciones/${id}`);
   },
 };
 

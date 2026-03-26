@@ -12,6 +12,7 @@ const MateriaForm: React.FC<MateriaFormProps> = ({ materia, onSave, onCancel }) 
     nombre: '',
     grado: 1,
     es_numerica: true,
+    modalidad: 'Media General',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,6 +23,7 @@ const MateriaForm: React.FC<MateriaFormProps> = ({ materia, onSave, onCancel }) 
         nombre: materia.nombre,
         grado: materia.grado,
         es_numerica: materia.es_numerica,
+        modalidad: materia.modalidad || 'Media General',
       });
     }
   }, [materia]);
@@ -55,6 +57,7 @@ const MateriaForm: React.FC<MateriaFormProps> = ({ materia, onSave, onCancel }) 
           nombre: formData.nombre,
           grado: formData.grado,
           es_numerica: formData.es_numerica,
+          modalidad: formData.modalidad,
         };
         await materiaApi.update(materia.id, updateData);
       } else {
@@ -104,7 +107,7 @@ const MateriaForm: React.FC<MateriaFormProps> = ({ materia, onSave, onCancel }) 
         {/* Grado */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Grado *
+            Año *
           </label>
           <select
             name="grado"
@@ -115,9 +118,29 @@ const MateriaForm: React.FC<MateriaFormProps> = ({ materia, onSave, onCancel }) 
           >
             {grados.map(grado => (
               <option key={grado} value={grado}>
-                {grado}° Grado
+                {grado}° Año
               </option>
             ))}
+          </select>
+        </div>
+
+        {/* Modalidad */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Modalidad
+          </label>
+          <select
+            name="modalidad"
+            value={formData.modalidad}
+            onChange={handleInputChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="Media General">Media General</option>
+            <option value="Técnica">Técnica</option>
+            <option value="Ciencias">Ciencias</option>
+            <option value="Humanidades">Humanidades</option>
+            <option value="Ambas">Ambas</option>
+            <option value="Todas">Todas</option>
           </select>
         </div>
 
@@ -152,7 +175,8 @@ const MateriaForm: React.FC<MateriaFormProps> = ({ materia, onSave, onCancel }) 
           <h4 className="text-sm font-medium text-gray-700 mb-2">Vista Previa:</h4>
           <div className="text-sm text-gray-600">
             <p><strong>Nombre:</strong> {formData.nombre || '(Sin nombre)'}</p>
-            <p><strong>Grado:</strong> {formData.grado}°</p>
+            <p><strong>Año:</strong> {formData.grado}°</p>
+            <p><strong>Modalidad:</strong> {formData.modalidad}</p>
             <p><strong>Tipo:</strong> {formData.es_numerica ? 'Numérica (1-20)' : 'Literal'}</p>
           </div>
         </div>

@@ -10,6 +10,7 @@ import {
   ArrowRightOnRectangleIcon,
   BellIcon,
   Cog6ToothIcon,
+  RectangleStackIcon,
 } from '@heroicons/react/24/outline';
 
 const Navbar: React.FC = () => {
@@ -26,6 +27,7 @@ const Navbar: React.FC = () => {
     { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
     { name: 'Alumnos', href: '/alumnos', icon: UserGroupIcon },
     { name: 'Materias', href: '/materias', icon: BookOpenIcon },
+    { name: 'Secciones', href: '/secciones', icon: RectangleStackIcon },
     { name: 'Boletas', href: '/boletas', icon: DocumentTextIcon },
     { name: 'Config', href: '/configuracion', icon: Cog6ToothIcon },
   ];
@@ -42,7 +44,6 @@ const Navbar: React.FC = () => {
               <AcademicCapIcon className="h-6 w-6 text-white" />
             </div>
             <div className="hidden sm:block">
-              <h1 className="text-xl font-bold text-slate-900">Sistema de Boletas</h1>
               <p className="text-xs text-slate-500 -mt-1">Panel Administrativo</p>
             </div>
           </div>

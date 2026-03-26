@@ -55,7 +55,7 @@ const MateriasList: React.FC<MateriasListProps> = ({ onEdit }) => {
       
       {/* Filter Section */}
       <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-        <h3 className="text-lg font-semibold mb-3 text-gray-700">Filtrar por Grado</h3>
+        <h3 className="text-lg font-semibold mb-3 text-gray-700">Filtrar por Año</h3>
         <div className="flex gap-2 flex-wrap">
           <button
             onClick={() => handleGradoFilter(undefined)}
@@ -77,7 +77,7 @@ const MateriasList: React.FC<MateriasListProps> = ({ onEdit }) => {
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
             >
-              {grado}° Grado
+              {grado}° Año
             </button>
           ))}
         </div>
@@ -103,7 +103,7 @@ const MateriasList: React.FC<MateriasListProps> = ({ onEdit }) => {
               <thead>
                 <tr className="bg-gray-100">
                   <th className="border border-gray-300 px-4 py-2 text-left">Nombre</th>
-                  <th className="border border-gray-300 px-4 py-2 text-left">Grado</th>
+                  <th className="border border-gray-300 px-4 py-2 text-left">Año</th>
                   <th className="border border-gray-300 px-4 py-2 text-left">Tipo</th>
                   <th className="border border-gray-300 px-4 py-2 text-left">Acciones</th>
                 </tr>
@@ -147,7 +147,7 @@ const MateriasList: React.FC<MateriasListProps> = ({ onEdit }) => {
               <div className="text-center py-8">
                 <p className="text-gray-500">
                   {filterGrado !== undefined 
-                    ? `No hay materias registradas para ${filterGrado}° grado` 
+                    ? `No hay materias registradas para ${filterGrado}° año` 
                     : 'No hay materias registradas'
                   }
                 </p>

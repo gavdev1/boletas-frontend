@@ -17,7 +17,14 @@ const AlumnoForm: React.FC<AlumnoFormProps> = ({ alumno, onSave, onCancel }) => 
     lugar_nacimiento: '',
     estado_nacimiento: '',
     nombre_representante: '',
+    telefono_representante: '',
+    correo_representante: '',
     direccion_representante: '',
+    correo_estudiante: '',
+    grado: undefined,
+    seccion: '',
+    numero_lista: undefined,
+    modalidad: 'Media General',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,17 +40,32 @@ const AlumnoForm: React.FC<AlumnoFormProps> = ({ alumno, onSave, onCancel }) => 
         lugar_nacimiento: alumno.lugar_nacimiento || '',
         estado_nacimiento: alumno.estado_nacimiento || '',
         nombre_representante: alumno.nombre_representante || '',
+        telefono_representante: alumno.telefono_representante || '',
+        correo_representante: alumno.correo_representante || '',
         direccion_representante: alumno.direccion_representante || '',
+        correo_estudiante: alumno.correo_estudiante || '',
+        grado: alumno.grado,
+        seccion: alumno.seccion || '',
+        numero_lista: alumno.numero_lista,
+        modalidad: alumno.modalidad || 'Media General',
       });
     }
   }, [alumno]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    
+    if (type === 'number') {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value === '' ? undefined : parseInt(value)
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -58,17 +80,60 @@ const AlumnoForm: React.FC<AlumnoFormProps> = ({ alumno, onSave, onCancel }) => 
         Object.keys(formData).forEach(key => {
           const value = formData[key as keyof AlumnoCreate];
           if (value !== '' && value !== undefined) {
-            updateData[key as keyof AlumnoUpdate] = value;
+            (updateData as any)[key] = value;
           }
         });
         await alumnoApi.update(alumno.id, updateData);
       } else {
-        // Create new alumno
-        await alumnoApi.create(formData);
+        // Create new alumno - require all fields
+        const createData = { ...formData };
+        
+        // Ensure required fields are not empty
+        if (!createData.cedula.trim() || !createData.nombre.trim() || !createData.apellido.trim()) {
+          setError('Los campos Cédula, Nombre y Apellido son obligatorios');
+          setLoading(false);
+          return;
+        }
+        
+        // Validate optional fields that are now required
+        const requiredFields = ['codigo', 'fecha_nacimiento', 'lugar_nacimiento', 'estado_nacimiento', 
+                               'nombre_representante', 'telefono_representante', 'correo_representante', 'direccion_representante', 
+                               'correo_estudiante', 'seccion'];
+        
+        const missingFields = requiredFields.filter(field => !createData[field as keyof typeof createData]);
+        if (missingFields.length > 0) {
+          setError(`Todos los campos son obligatorios. Faltan: ${missingFields.join(', ')}`);
+          setLoading(false);
+          return;
+        }
+        
+        // Validate grado and numero_lista
+        if (!createData.grado || createData.grado < 1 || createData.grado > 6) {
+          setError('El año es obligatorio y debe estar entre 1 y 6');
+          setLoading(false);
+          return;
+        }
+        
+        if (!createData.numero_lista || createData.numero_lista < 1) {
+          setError('El número en lista es obligatorio y debe ser mayor a 0');
+          setLoading(false);
+          return;
+        }
+        
+        console.log('Sending data to backend:', createData);
+        await alumnoApi.create(createData);
       }
       onSave();
-    } catch (err) {
-      setError(alumno ? 'Error al actualizar el alumno' : 'Error al crear el alumno');
+    } catch (err: any) {
+      console.log('Full error object:', err);
+      console.log('Response data:', err?.response?.data);
+      console.log('Response status:', err?.response?.status);
+      console.log('Response headers:', err?.response?.headers);
+      
+      const errorMessage = err?.response?.data?.detail || 
+                          err?.response?.data?.message ||
+                          (alumno ? 'Error al actualizar el alumno' : 'Error al crear el alumno');
+      setError(errorMessage);
       console.error('Error saving alumno:', err);
     } finally {
       setLoading(false);
@@ -137,13 +202,14 @@ const AlumnoForm: React.FC<AlumnoFormProps> = ({ alumno, onSave, onCancel }) => 
           {/* Código */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Código
+              Código *
             </label>
             <input
               type="text"
               name="codigo"
               value={formData.codigo}
               onChange={handleInputChange}
+              required
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -151,13 +217,14 @@ const AlumnoForm: React.FC<AlumnoFormProps> = ({ alumno, onSave, onCancel }) => 
           {/* Fecha de Nacimiento */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Fecha de Nacimiento
+              Fecha de Nacimiento *
             </label>
             <input
               type="date"
               name="fecha_nacimiento"
               value={formData.fecha_nacimiento}
               onChange={handleInputChange}
+              required
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -165,13 +232,14 @@ const AlumnoForm: React.FC<AlumnoFormProps> = ({ alumno, onSave, onCancel }) => 
           {/* Lugar de Nacimiento */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Lugar de Nacimiento
+              Lugar de Nacimiento *
             </label>
             <input
               type="text"
               name="lugar_nacimiento"
               value={formData.lugar_nacimiento}
               onChange={handleInputChange}
+              required
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -179,13 +247,14 @@ const AlumnoForm: React.FC<AlumnoFormProps> = ({ alumno, onSave, onCancel }) => 
           {/* Estado de Nacimiento */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Estado de Nacimiento
+              Estado de Nacimiento *
             </label>
             <input
               type="text"
               name="estado_nacimiento"
               value={formData.estado_nacimiento}
               onChange={handleInputChange}
+              required
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -193,28 +262,153 @@ const AlumnoForm: React.FC<AlumnoFormProps> = ({ alumno, onSave, onCancel }) => 
           {/* Nombre del Representante */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nombre del Representante
+              Nombre del Representante *
             </label>
             <input
               type="text"
               name="nombre_representante"
               value={formData.nombre_representante}
               onChange={handleInputChange}
+              required
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+          </div>
+
+          {/* Teléfono del Representante */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Teléfono del Representante *
+            </label>
+            <input
+              type="tel"
+              name="telefono_representante"
+              value={formData.telefono_representante}
+              onChange={handleInputChange}
+              required
+              placeholder="Ej: 0414-1234567"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Correo del Representante */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Correo del Representante *
+            </label>
+            <input
+              type="email"
+              name="correo_representante"
+              value={formData.correo_representante}
+              onChange={handleInputChange}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+
+        {/* Información Académica */}
+        <div className="border-t pt-4">
+          <h3 className="text-lg font-semibold mb-4 text-gray-800">Información Académica</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Grado */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Año *
+              </label>
+              <select
+                name="grado"
+                value={formData.grado || ''}
+                onChange={handleInputChange}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Seleccionar...</option>
+                {[1, 2, 3, 4, 5, 6].map(grado => (
+                  <option key={grado} value={grado}>{grado}° Año</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Sección */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Sección *
+              </label>
+              <input
+                type="text"
+                name="seccion"
+                value={formData.seccion}
+                onChange={handleInputChange}
+                placeholder="Ej: A, B, C"
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            {/* Número en Lista */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Número en Lista *
+              </label>
+              <input
+                type="number"
+                name="numero_lista"
+                value={formData.numero_lista || ''}
+                onChange={handleInputChange}
+                min="1"
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            {/* Modalidad */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Modalidad
+              </label>
+              <select
+                name="modalidad"
+                value={formData.modalidad}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="Media General">Media General</option>
+                <option value="Técnica">Técnica</option>
+                <option value="Ciencias">Ciencias</option>
+                <option value="Humanidades">Humanidades</option>
+              </select>
+            </div>
+
+            {/* Correo del Estudiante */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Correo del Estudiante *
+              </label>
+              <input
+                type="email"
+                name="correo_estudiante"
+                value={formData.correo_estudiante}
+                onChange={handleInputChange}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
           </div>
         </div>
 
         {/* Dirección del Representante */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Dirección del Representante
+            Dirección del Representante *
           </label>
           <textarea
             name="direccion_representante"
             value={formData.direccion_representante}
             onChange={handleInputChange}
             rows={3}
+            required
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>

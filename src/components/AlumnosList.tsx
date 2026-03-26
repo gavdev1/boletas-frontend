@@ -142,7 +142,9 @@ const AlumnosList: React.FC<AlumnosListProps> = ({ onEdit }) => {
                   <th className="border border-gray-300 px-4 py-2 text-left">Cédula</th>
                   <th className="border border-gray-300 px-4 py-2 text-left">Nombre</th>
                   <th className="border border-gray-300 px-4 py-2 text-left">Apellido</th>
-                  <th className="border border-gray-300 px-4 py-2 text-left">Código</th>
+                  <th className="border border-gray-300 px-4 py-2 text-left">Año</th>
+                  <th className="border border-gray-300 px-4 py-2 text-left">Sección</th>
+                  <th className="border border-gray-300 px-4 py-2 text-left">Modalidad</th>
                   <th className="border border-gray-300 px-4 py-2 text-left">Acciones</th>
                 </tr>
               </thead>
@@ -152,7 +154,29 @@ const AlumnosList: React.FC<AlumnosListProps> = ({ onEdit }) => {
                     <td className="border border-gray-300 px-4 py-2">{alumno.cedula}</td>
                     <td className="border border-gray-300 px-4 py-2">{alumno.nombre}</td>
                     <td className="border border-gray-300 px-4 py-2">{alumno.apellido}</td>
-                    <td className="border border-gray-300 px-4 py-2">{alumno.codigo || '-'}</td>
+                    <td className="border border-gray-300 px-4 py-2">
+                      {alumno.grado ? `${alumno.grado}°` : '-'}
+                    </td>
+                    <td className="border border-gray-300 px-4 py-2">
+                      {alumno.seccion ? (
+                        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                          {alumno.seccion}
+                        </span>
+                      ) : '-'}
+                    </td>
+                    <td className="border border-gray-300 px-4 py-2">
+                      <span className={`px-2 py-1 rounded-full text-xs ${
+                        alumno.modalidad === 'Media General' 
+                          ? 'bg-green-100 text-green-800'
+                          : alumno.modalidad === 'Técnica'
+                          ? 'bg-purple-100 text-purple-800'
+                          : alumno.modalidad === 'Ciencias'
+                          ? 'bg-indigo-100 text-indigo-800'
+                          : 'bg-orange-100 text-orange-800'
+                      }`}>
+                        {alumno.modalidad || 'Media General'}
+                      </span>
+                    </td>
                     <td className="border border-gray-300 px-4 py-2">
                       <div className="flex gap-2">
                         <button

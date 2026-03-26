@@ -7,17 +7,21 @@ interface BoletaGeneratorProps {
 }
 
 const BoletaGenerator: React.FC<BoletaGeneratorProps> = ({ onSave, onCancel }) => {
-  const [alumnos, setAlumnos] = useState<Alumno[]>([]);
   const [materias, setMaterias] = useState<Materia[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
   // Form data
-  const [selectedAlumno, setSelectedAlumno] = useState<number | null>(null);
+  const [selectedAlumno, setSelectedAlumno] = useState<Alumno | null>(null);
+  const [cedulaBusqueda, setCedulaBusqueda] = useState('');
   const [anioEscolar, setAnioEscolar] = useState('');
   const [grado, setGrado] = useState(1);
   const [seccion, setSeccion] = useState('A');
+  const [modalidad, setModalidad] = useState('Media General');
   const [numeroLista, setNumeroLista] = useState('');
+  const [inasistenciasLapso1, setInasistenciasLapso1] = useState('');
+  const [inasistenciasLapso2, setInasistenciasLapso2] = useState('');
+  const [inasistenciasLapso3, setInasistenciasLapso3] = useState('');
   const [tipoEvaluacion, setTipoEvaluacion] = useState('Final');
   const [profesor, setProfesor] = useState('');
   const [nombrePlantel, setNombrePlantel] = useState('');
@@ -45,31 +49,62 @@ const BoletaGenerator: React.FC<BoletaGeneratorProps> = ({ onSave, onCancel }) =
   const grados = [1, 2, 3, 4, 5, 6];
 
   useEffect(() => {
-    fetchAlumnos();
     fetchMaterias();
     loadConfig();
   }, []);
 
   useEffect(() => {
     if (grado) {
-      fetchMateriasPorGrado();
+      fetchMateriasPorGradoYModalidad();
     }
-  }, [grado]);
+  }, [grado, modalidad]);
+
+  useEffect(() => {
+    // Update modalidad, grado, seccion when alumno changes
+    if (selectedAlumno) {
+      setModalidad(selectedAlumno.modalidad || 'Media General');
+      if (selectedAlumno.grado) {
+        setGrado(selectedAlumno.grado);
+      }
+      if (selectedAlumno.seccion) {
+        setSeccion(selectedAlumno.seccion);
+      }
+      if (selectedAlumno.numero_lista) {
+        setNumeroLista(selectedAlumno.numero_lista.toString());
+      }
+    }
+  }, [selectedAlumno]);
 
   useEffect(() => {
     // Load existing calificaciones when alumno or anio_escolar changes
     if (selectedAlumno && anioEscolar) {
       loadExistingCalificaciones();
     }
-  }, [selectedAlumno, anioEscolar]);
+  }, [selectedAlumno?.id, anioEscolar]);
 
-  const fetchAlumnos = async () => {
+  const buscarAlumnoPorCedula = async (cedula: string) => {
+    if (!cedula.trim()) {
+      setError('Debe ingresar una cédula');
+      return;
+    }
+    
     try {
-      const data = await alumnoApi.getAll();
-      setAlumnos(data);
+      const alumno = await alumnoApi.getByCedula(cedula);
+      setSelectedAlumno(alumno);
+      setCedulaBusqueda(`${alumno.nombre} ${alumno.apellido} - ${alumno.cedula}`);
+      setError(null);
     } catch (err) {
-      setError('Error al cargar los alumnos');
-      console.error('Error fetching alumnos:', err);
+      setError('Alumno no encontrado');
+      setSelectedAlumno(null);
+      setCedulaBusqueda('');
+      console.error('Error searching alumno:', err);
+    }
+  };
+
+  const handleCedulaKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      buscarAlumnoPorCedula(cedulaBusqueda);
     }
   };
 
@@ -83,14 +118,14 @@ const BoletaGenerator: React.FC<BoletaGeneratorProps> = ({ onSave, onCancel }) =
     }
   };
 
-  const fetchMateriasPorGrado = async () => {
+  const fetchMateriasPorGradoYModalidad = async () => {
     try {
-      const data = await materiaApi.getAll(0, 100, grado);
+      const data = await materiaApi.getAll(0, 100, grado, modalidad);
       setMaterias(data);
       
       // Initialize calificaciones for the new grade's materias
       const newCalificaciones = data.map((materia: Materia) => ({
-        alumno_id: selectedAlumno || 0,
+        alumno_id: selectedAlumno?.id || 0,
         materia_id: materia.id,
         anio_escolar: anioEscolar,
         lapso_1_def: undefined,
@@ -107,15 +142,17 @@ const BoletaGenerator: React.FC<BoletaGeneratorProps> = ({ onSave, onCancel }) =
   };
 
   const loadExistingCalificaciones = async () => {
+    if (!selectedAlumno) return;
+    
     try {
-      const existingCalifs = await calificacionApi.getByAlumno(selectedAlumno!, anioEscolar);
+      const existingCalifs = await calificacionApi.getByAlumno(selectedAlumno.id, anioEscolar);
       
       // Create a map of existing calificaciones by materia_id
       const califMap = new Map();
       existingCalifs.forEach(calif => {
         if (!califMap.has(calif.materia_id)) {
           califMap.set(calif.materia_id, {
-            alumno_id: selectedAlumno!,
+            alumno_id: selectedAlumno?.id || 0,
             materia_id: calif.materia_id,
             anio_escolar: anioEscolar,
             lapso_1_def: undefined,
@@ -150,7 +187,7 @@ const BoletaGenerator: React.FC<BoletaGeneratorProps> = ({ onSave, onCancel }) =
       const mergedCalificaciones = materias.map((materia: Materia) => {
         const existing = califMap.get(materia.id);
         return existing || {
-          alumno_id: selectedAlumno!,
+          alumno_id: selectedAlumno?.id || 0,
           materia_id: materia.id,
           anio_escolar: anioEscolar,
           lapso_1_def: undefined,
@@ -168,21 +205,51 @@ const BoletaGenerator: React.FC<BoletaGeneratorProps> = ({ onSave, onCancel }) =
     }
   };
 
+  const calcularDefinitivo = (lapso1: number | undefined, lapso2: number | undefined, lapso3: number | undefined): number | undefined => {
+    const notas = [lapso1, lapso2, lapso3].filter(nota => nota !== undefined && nota !== null && nota !== 0) as number[];
+    if (notas.length === 0) return undefined;
+    
+    // Calcular promedio de las notas disponibles
+    const suma = notas.reduce((acc, nota) => acc + nota, 0);
+    return Math.round((suma / notas.length) * 100) / 100; // Redondear a 2 decimales
+  };
+
+  const getLapsoEditable = (): number => {
+    // Determinar qué lapso se puede editar según el tipo de evaluación
+    if (tipoEvaluacion.includes('Lapso 1')) return 1;
+    if (tipoEvaluacion.includes('Lapso 2')) return 2;
+    if (tipoEvaluacion.includes('Lapso 3') || tipoEvaluacion.includes('Final')) return 3;
+    return 3; // Default
+  };
+
   const handleCalificacionChange = (materiaId: number, field: keyof CalificacionCreate, value: number | string | undefined) => {
-    setCalificaciones(prev => 
-      prev.map(cal => 
-        cal.materia_id === materiaId 
-          ? { ...cal, [field]: value || undefined }
-          : cal
-      )
-    );
+    setCalificaciones(prev => {
+      const updated = prev.map(cal => {
+        if (cal.materia_id === materiaId) {
+          const newCal = { ...cal, [field]: value || undefined };
+          
+          // Si se está cambiando un lapso, recalcular el definitivo
+          if (field === 'lapso_1_def' || field === 'lapso_2_def' || field === 'lapso_3_def') {
+            const materia = materias.find(m => m.id === materiaId);
+            if (materia?.es_numerica) {
+              const definitivo = calcularDefinitivo(newCal.lapso_1_def, newCal.lapso_2_def, newCal.lapso_3_def);
+              newCal.def_final = definitivo;
+            }
+          }
+          
+          return newCal;
+        }
+        return cal;
+      });
+      return updated;
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!selectedAlumno) {
-      setError('Debe seleccionar un alumno');
+      setError('Debe buscar y seleccionar un alumno');
       return;
     }
 
@@ -199,7 +266,7 @@ const BoletaGenerator: React.FC<BoletaGeneratorProps> = ({ onSave, onCancel }) =
         // Guardar cada lapso que tenga nota
         if (cal.lapso_1_def !== undefined && cal.lapso_1_def !== null) {
           await calificacionApi.registrarNota({
-            alumno_id: selectedAlumno,
+            alumno_id: selectedAlumno.id,
             materia_id: cal.materia_id,
             lapso: 1,
             nota: cal.lapso_1_def,
@@ -208,7 +275,7 @@ const BoletaGenerator: React.FC<BoletaGeneratorProps> = ({ onSave, onCancel }) =
         }
         if (cal.lapso_2_def !== undefined && cal.lapso_2_def !== null) {
           await calificacionApi.registrarNota({
-            alumno_id: selectedAlumno,
+            alumno_id: selectedAlumno.id,
             materia_id: cal.materia_id,
             lapso: 2,
             nota: cal.lapso_2_def,
@@ -217,7 +284,7 @@ const BoletaGenerator: React.FC<BoletaGeneratorProps> = ({ onSave, onCancel }) =
         }
         if (cal.lapso_3_def !== undefined && cal.lapso_3_def !== null) {
           await calificacionApi.registrarNota({
-            alumno_id: selectedAlumno,
+            alumno_id: selectedAlumno.id,
             materia_id: cal.materia_id,
             lapso: 3,
             nota: cal.lapso_3_def,
@@ -226,7 +293,7 @@ const BoletaGenerator: React.FC<BoletaGeneratorProps> = ({ onSave, onCancel }) =
         }
         if (cal.literal) {
           await calificacionApi.registrarNota({
-            alumno_id: selectedAlumno,
+            alumno_id: selectedAlumno.id,
             materia_id: cal.materia_id,
             lapso: 3, // Usar lapso 3 para literales
             nota: cal.lapso_3_def || 0, // Usar la nota existente o 0 si no hay
@@ -244,11 +311,15 @@ const BoletaGenerator: React.FC<BoletaGeneratorProps> = ({ onSave, onCancel }) =
       else if (tipoEvaluacion.includes('Final')) hastaLapso = 3;
       
       const boletaData: BoletaCreate = {
-        alumno_id: selectedAlumno,
+        alumno_id: selectedAlumno.id,
         anio_escolar: anioEscolar,
         grado,
         seccion,
+        modalidad,
         numero_lista: numeroLista ? parseInt(numeroLista) : undefined,
+        inasistencias_lapso_1: inasistenciasLapso1 ? parseInt(inasistenciasLapso1) : 0,
+        inasistencias_lapso_2: inasistenciasLapso2 ? parseInt(inasistenciasLapso2) : 0,
+        inasistencias_lapso_3: inasistenciasLapso3 ? parseInt(inasistenciasLapso3) : 0,
         tipo_evaluacion: tipoEvaluacion,
         hasta_lapso: hastaLapso,
         observaciones: observaciones || undefined,
@@ -284,24 +355,24 @@ const BoletaGenerator: React.FC<BoletaGeneratorProps> = ({ onSave, onCancel }) =
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Datos del Alumno y Boleta */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {/* Alumno */}
+          {/* Búsqueda de Alumno */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Alumno *
+              Buscar Alumno por Cédula *
             </label>
-            <select
-              value={selectedAlumno || ''}
-              onChange={(e) => setSelectedAlumno(parseInt(e.target.value))}
-              required
+            <input
+              type="text"
+              value={cedulaBusqueda}
+              onChange={(e) => setCedulaBusqueda(e.target.value)}
+              onKeyPress={handleCedulaKeyPress}
+              placeholder="Ingrese cédula y presione Enter"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Seleccione un alumno</option>
-              {alumnos.map(alumno => (
-                <option key={alumno.id} value={alumno.id}>
-                  {alumno.nombre} {alumno.apellido} - {alumno.cedula}
-                </option>
-              ))}
-            </select>
+            />
+            {selectedAlumno && (
+              <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-sm text-green-700">
+                ✅ {selectedAlumno.nombre} {selectedAlumno.apellido} - {selectedAlumno.cedula}
+              </div>
+            )}
           </div>
 
           {/* Año Escolar */}
@@ -322,7 +393,7 @@ const BoletaGenerator: React.FC<BoletaGeneratorProps> = ({ onSave, onCancel }) =
           {/* Grado */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Grado *
+              Año *
             </label>
             <select
               value={grado}
@@ -331,9 +402,23 @@ const BoletaGenerator: React.FC<BoletaGeneratorProps> = ({ onSave, onCancel }) =
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               {grados.map(g => (
-                <option key={g} value={g}>{g}° Grado</option>
+                <option key={g} value={g}>{g}° Año</option>
               ))}
             </select>
+          </div>
+
+          {/* Modalidad (no editable) */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Modalidad *
+            </label>
+            <input
+              type="text"
+              value={modalidad}
+              disabled
+              className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-600 cursor-not-allowed"
+              title="La modalidad se carga automáticamente según el alumno"
+            />
           </div>
 
           {/* Sección */}
@@ -367,6 +452,51 @@ const BoletaGenerator: React.FC<BoletaGeneratorProps> = ({ onSave, onCancel }) =
             />
           </div>
 
+          {/* Inasistencias Lapso 1 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Inasistencias Lapso 1
+            </label>
+            <input
+              type="number"
+              value={inasistenciasLapso1}
+              onChange={(e) => setInasistenciasLapso1(e.target.value)}
+              placeholder="0"
+              min="0"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Inasistencias Lapso 2 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Inasistencias Lapso 2
+            </label>
+            <input
+              type="number"
+              value={inasistenciasLapso2}
+              onChange={(e) => setInasistenciasLapso2(e.target.value)}
+              placeholder="0"
+              min="0"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Inasistencias Lapso 3 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Inasistencias Lapso 3
+            </label>
+            <input
+              type="number"
+              value={inasistenciasLapso3}
+              onChange={(e) => setInasistenciasLapso3(e.target.value)}
+              placeholder="0"
+              min="0"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
           {/* Tipo de Evaluación */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -389,10 +519,11 @@ const BoletaGenerator: React.FC<BoletaGeneratorProps> = ({ onSave, onCancel }) =
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Profesor
+              Profesor *  
             </label>
             <input
               type="text"
+              required
               value={profesor}
               onChange={(e) => setProfesor(e.target.value)}
               placeholder="Nombre del profesor"
@@ -402,10 +533,11 @@ const BoletaGenerator: React.FC<BoletaGeneratorProps> = ({ onSave, onCancel }) =
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nombre del Plantel
+              Nombre del Plantel *
             </label>
             <input
               type="text"
+              required
               value={nombrePlantel}
               onChange={(e) => setNombrePlantel(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -415,10 +547,11 @@ const BoletaGenerator: React.FC<BoletaGeneratorProps> = ({ onSave, onCancel }) =
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Dirección del Plantel
+            Dirección del Plantel *
           </label>
           <input
             type="text"
+            required
             value={direccionPlantel}
             onChange={(e) => setDireccionPlantel(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -459,6 +592,8 @@ const BoletaGenerator: React.FC<BoletaGeneratorProps> = ({ onSave, onCancel }) =
                     const materia = getMateriaById(calificacion.materia_id);
                     if (!materia) return null;
                     
+                    const lapsoEditable = getLapsoEditable();
+                    
                     return (
                       <tr key={calificacion.materia_id} className="hover:bg-gray-50">
                         <td className="border border-gray-300 px-4 py-2">
@@ -480,8 +615,14 @@ const BoletaGenerator: React.FC<BoletaGeneratorProps> = ({ onSave, onCancel }) =
                               'lapso_1_def', 
                               e.target.value ? parseInt(e.target.value) : undefined
                             )}
-                            className="w-full px-2 py-1 border border-gray-300 rounded text-center focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            disabled={lapsoEditable !== 1}
+                            className={`w-full px-2 py-1 border border-gray-300 rounded text-center ${
+                              lapsoEditable === 1 
+                                ? 'focus:outline-none focus:ring-1 focus:ring-blue-500' 
+                                : 'bg-gray-100 text-gray-500 cursor-not-allowed'
+                            }`}
                             placeholder="-"
+                            title={lapsoEditable === 1 ? "Editable" : "No editable - Lapso 1 bloqueado"}
                           />
                         </td>
                         <td className="border border-gray-300 px-2 py-2">
@@ -495,8 +636,14 @@ const BoletaGenerator: React.FC<BoletaGeneratorProps> = ({ onSave, onCancel }) =
                               'lapso_2_def', 
                               e.target.value ? parseInt(e.target.value) : undefined
                             )}
-                            className="w-full px-2 py-1 border border-gray-300 rounded text-center focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            disabled={lapsoEditable !== 2}
+                            className={`w-full px-2 py-1 border border-gray-300 rounded text-center ${
+                              lapsoEditable === 2 
+                                ? 'focus:outline-none focus:ring-1 focus:ring-blue-500' 
+                                : 'bg-gray-100 text-gray-500 cursor-not-allowed'
+                            }`}
                             placeholder="-"
+                            title={lapsoEditable === 2 ? "Editable" : "No editable - Lapso 2 bloqueado"}
                           />
                         </td>
                         <td className="border border-gray-300 px-2 py-2">
@@ -510,24 +657,29 @@ const BoletaGenerator: React.FC<BoletaGeneratorProps> = ({ onSave, onCancel }) =
                               'lapso_3_def', 
                               e.target.value ? parseInt(e.target.value) : undefined
                             )}
-                            className="w-full px-2 py-1 border border-gray-300 rounded text-center focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            disabled={lapsoEditable !== 3}
+                            className={`w-full px-2 py-1 border border-gray-300 rounded text-center ${
+                              lapsoEditable === 3 
+                                ? 'focus:outline-none focus:ring-1 focus:ring-blue-500' 
+                                : 'bg-gray-100 text-gray-500 cursor-not-allowed'
+                            }`}
                             placeholder="-"
+                            title={lapsoEditable === 3 ? "Editable" : "No editable - Lapso 3 bloqueado"}
                           />
                         </td>
                         <td className="border border-gray-300 px-2 py-2">
-                          <input
-                            type="number"
-                            min="1"
-                            max="20"
-                            value={calificacion.def_final || ''}
-                            onChange={(e) => handleCalificacionChange(
-                              calificacion.materia_id, 
-                              'def_final', 
-                              e.target.value ? parseInt(e.target.value) : undefined
-                            )}
-                            className="w-full px-2 py-1 border border-gray-300 rounded text-center focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            placeholder="-"
-                          />
+                          {materia.es_numerica ? (
+                            <input
+                              type="text"
+                              value={calificacion.def_final || ''}
+                              readOnly
+                              className="w-full px-2 py-1 border border-gray-300 rounded text-center bg-gray-100 text-gray-700 cursor-not-allowed"
+                              placeholder="-"
+                              title="Calculado automáticamente como promedio de los lapsos"
+                            />
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
                         </td>
                         <td className="border border-gray-300 px-2 py-2">
                           <input
@@ -563,7 +715,11 @@ const BoletaGenerator: React.FC<BoletaGeneratorProps> = ({ onSave, onCancel }) =
           </button>
           <button
             type="button"
-            onClick={onCancel}
+            onClick={() => {
+              setSelectedAlumno(null);
+              setCedulaBusqueda('');
+              onCancel();
+            }}
             className="px-6 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
           >
             Cancelar
