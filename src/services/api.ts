@@ -51,6 +51,7 @@ export interface Alumno {
   fecha_nacimiento?: string;
   lugar_nacimiento?: string;
   estado_nacimiento?: string;
+  municipio?: string;
   nombre_representante?: string;
   telefono_representante?: string;
   correo_representante?: string;
@@ -60,6 +61,7 @@ export interface Alumno {
   seccion?: string;
   numero_lista?: number;
   modalidad?: string;
+  status?: string;
 }
 
 export interface AlumnoCreate {
@@ -70,6 +72,7 @@ export interface AlumnoCreate {
   fecha_nacimiento?: string;
   lugar_nacimiento?: string;
   estado_nacimiento?: string;
+  municipio?: string;
   nombre_representante?: string;
   telefono_representante?: string;
   correo_representante?: string;
@@ -79,6 +82,7 @@ export interface AlumnoCreate {
   seccion?: string;
   numero_lista?: number;
   modalidad?: string;
+  status?: string;
 }
 
 export interface AlumnoUpdate {
@@ -89,6 +93,7 @@ export interface AlumnoUpdate {
   fecha_nacimiento?: string;
   lugar_nacimiento?: string;
   estado_nacimiento?: string;
+  municipio?: string;
   nombre_representante?: string;
   telefono_representante?: string;
   correo_representante?: string;
@@ -98,6 +103,7 @@ export interface AlumnoUpdate {
   seccion?: string;
   numero_lista?: number;
   modalidad?: string;
+  status?: string;
 }
 
 export interface Seccion {
@@ -385,6 +391,20 @@ export const boletaApi = {
     });
     return response.data;
   },
+
+  downloadBulkPdf: async (grado: number, seccion: string, anioEscolar: string, tipoEvaluacion: string): Promise<Blob> => {
+    const params = new URLSearchParams({
+      grado: grado.toString(),
+      seccion: seccion,
+      anio_escolar: anioEscolar,
+      tipo_evaluacion: tipoEvaluacion
+    });
+    
+    const response = await api.get(`/boletas/bulk/pdf?${params}`, {
+      responseType: 'blob'
+    });
+    return response.data;
+  },
 };
 
 export const calificacionApi = {
@@ -414,8 +434,15 @@ export const calificacionApi = {
   },
 };
 
+export interface AlumnoStats {
+  total: number;
+  presente: number;
+  egresado: number;
+  retirado: number;
+}
+
 export interface DashboardStats {
-  total_alumnos: number;
+  total_alumnos: AlumnoStats;
   total_materias: number;
   total_boletas: number;
 }

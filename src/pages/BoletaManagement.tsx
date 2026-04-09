@@ -26,6 +26,13 @@ const BoletaManagement: React.FC = () => {
   const [alumno, setAlumno] = useState<Alumno | null>(null);
   const [boletas, setBoletas] = useState<BoletaList[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [bulkDownloadLoading, setBulkDownloadLoading] = useState(false);
+  const [bulkForm, setBulkForm] = useState({
+    grado: 1,
+    seccion: 'A',
+    anioEscolar: '2024/2025',
+    tipoEvaluacion: 'Lapso 1'
+  });
 
   const handleGenerateNew = () => {
     setSelectedBoleta(undefined);
@@ -116,6 +123,40 @@ const BoletaManagement: React.FC = () => {
     }
   };
 
+  const handleBulkDownload = async () => {
+    try {
+      setBulkDownloadLoading(true);
+      setError(null);
+      
+      const blob = await boletaApi.downloadBulkPdf(
+        bulkForm.grado,
+        bulkForm.seccion,
+        bulkForm.anioEscolar,
+        bulkForm.tipoEvaluacion
+      );
+      
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `boletas_${bulkForm.grado}${bulkForm.seccion}_${bulkForm.anioEscolar.replace('/', '-')}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      setError('Error al descargar las boletas de la sección');
+    } finally {
+      setBulkDownloadLoading(false);
+    }
+  };
+
+  const handleBulkFormChange = (field: string, value: string | number) => {
+    setBulkForm(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
   const getTipoBadgeColor = (tipo: string | undefined) => {
     if (!tipo) return 'bg-gray-100 text-gray-700';
     if (tipo.includes('Final')) return 'bg-purple-100 text-purple-700';
@@ -183,6 +224,88 @@ const BoletaManagement: React.FC = () => {
                   <p className="text-red-700">{error}</p>
                 </div>
               )}
+            </div>
+
+            {/* Bulk Download Section */}
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <ArrowDownTrayIcon className="h-5 w-5 text-green-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-slate-900">Descargar Boletas por Sección</h3>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                {/* Grado */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Grado
+                  </label>
+                  <select
+                    value={bulkForm.grado}
+                    onChange={(e) => handleBulkFormChange('grado', parseInt(e.target.value))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                  >
+                    {[1, 2, 3, 4, 5, 6].map(grado => (
+                      <option key={grado} value={grado}>{grado}° Grado</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Sección */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Sección
+                  </label>
+                  <input
+                    type="text"
+                    value={bulkForm.seccion}
+                    onChange={(e) => handleBulkFormChange('seccion', e.target.value)}
+                    placeholder="Ej: A, B, C"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+
+                {/* Año Escolar */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Año Escolar
+                  </label>
+                  <input
+                    type="text"
+                    value={bulkForm.anioEscolar}
+                    onChange={(e) => handleBulkFormChange('anioEscolar', e.target.value)}
+                    placeholder="Ej: 2024/2025"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+
+                {/* Tipo Evaluación */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Lapso / Evaluación
+                  </label>
+                  <select
+                    value={bulkForm.tipoEvaluacion}
+                    onChange={(e) => handleBulkFormChange('tipoEvaluacion', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                  >
+                    <option value="Lapso 1">Lapso 1</option>
+                    <option value="Lapso 2">Lapso 2</option>
+                    <option value="Lapso 3">Lapso 3</option>
+                    <option value="Final">Final</option>
+                  </select>
+                </div>
+              </div>
+
+              <button
+                onClick={handleBulkDownload}
+                disabled={bulkDownloadLoading}
+                className="w-full sm:w-auto px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 font-medium transition-colors flex items-center justify-center gap-2"
+              >
+                <ArrowDownTrayIcon className="h-5 w-5" />
+                {bulkDownloadLoading ? 'Descargando...' : 'Descargar Todas las Boletas'}
+              </button>
             </div>
 
             {/* Alumno Info & Boletas */}
