@@ -33,7 +33,7 @@ const Dashboard: React.FC = () => {
   }, []);
 
   const statsCards = [
-    { name: 'Total Alumnos', value: stats?.total_alumnos ?? 0, icon: UserGroupIcon, color: 'bg-blue-500', href: '/alumnos' },
+    { name: 'Total Alumnos', value: stats?.total_alumnos?.total ?? 0, icon: UserGroupIcon, color: 'bg-blue-500', href: '/alumnos' },
     { name: 'Materias', value: stats?.total_materias ?? 0, icon: BookOpenIcon, color: 'bg-purple-500', href: '/materias' },
     { name: 'Boletas Generadas', value: stats?.total_boletas ?? 0, icon: DocumentTextIcon, color: 'bg-orange-500', href: '/boletas' },
   ];
