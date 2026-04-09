@@ -16,6 +16,7 @@ const AlumnoForm: React.FC<AlumnoFormProps> = ({ alumno, onSave, onCancel }) => 
     fecha_nacimiento: '',
     lugar_nacimiento: '',
     estado_nacimiento: '',
+    municipio: '',
     nombre_representante: '',
     telefono_representante: '',
     correo_representante: '',
@@ -25,6 +26,7 @@ const AlumnoForm: React.FC<AlumnoFormProps> = ({ alumno, onSave, onCancel }) => 
     seccion: '',
     numero_lista: undefined,
     modalidad: 'Media General',
+    status: 'presente',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,6 +41,7 @@ const AlumnoForm: React.FC<AlumnoFormProps> = ({ alumno, onSave, onCancel }) => 
         fecha_nacimiento: alumno.fecha_nacimiento || '',
         lugar_nacimiento: alumno.lugar_nacimiento || '',
         estado_nacimiento: alumno.estado_nacimiento || '',
+        municipio: alumno.municipio || '',
         nombre_representante: alumno.nombre_representante || '',
         telefono_representante: alumno.telefono_representante || '',
         correo_representante: alumno.correo_representante || '',
@@ -48,6 +51,7 @@ const AlumnoForm: React.FC<AlumnoFormProps> = ({ alumno, onSave, onCancel }) => 
         seccion: alumno.seccion || '',
         numero_lista: alumno.numero_lista,
         modalidad: alumno.modalidad || 'Media General',
+        status: alumno.status || 'presente',
       });
     }
   }, [alumno]);
@@ -259,6 +263,21 @@ const AlumnoForm: React.FC<AlumnoFormProps> = ({ alumno, onSave, onCancel }) => 
             />
           </div>
 
+          {/* Municipio */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Municipio
+            </label>
+            <input
+              type="text"
+              name="municipio"
+              value={formData.municipio}
+              onChange={handleInputChange}
+              placeholder="Ej: Libertador"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
           {/* Nombre del Representante */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -392,6 +411,21 @@ const AlumnoForm: React.FC<AlumnoFormProps> = ({ alumno, onSave, onCancel }) => 
                 value={formData.correo_estudiante}
                 onChange={handleInputChange}
                 required
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            {/* Status */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Estatus del Alumno
+              </label>
+              <input
+                type="text"
+                name="status"
+                value={formData.status}
+                onChange={handleInputChange}
+                placeholder="Ej: presente, egresado, retirado"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
